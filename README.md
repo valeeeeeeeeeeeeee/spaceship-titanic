@@ -1,0 +1,2 @@
+# SpaceshipTitanic-kaggle
+Kaggle competition
