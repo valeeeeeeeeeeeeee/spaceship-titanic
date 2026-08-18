@@ -1,0 +1,43 @@
+# Competition data — NOT redistributable.
+# Kaggle's rules forbid providing the Competition Data to anyone who has not
+# accepted them. Re-fetch instead: kagglehub.competition_download('spaceship-titanic')
+*.csv
+
+# Submissions (derived from the data, regenerate them from code)
+submission*.csv
+subm/
+outputs/
+
+# Credentials — never commit a Kaggle token
+kaggle.json
+.kaggle/
+.env
+*.pem
+
+# Models and other large artifacts
+*.pkl
+*.joblib
+*.h5
+*.onnx
+models/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.mypy_cache/
+.ruff_cache/
+
+# OneDrive / Windows / editors
+desktop.ini
+Thumbs.db
+*.lnk
+~$*
+.DS_Store
+.vscode/
+.idea/
