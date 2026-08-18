@@ -13,12 +13,16 @@ partir de registros pessoais recuperados do sistema de bordo danificado.
 ## Como rodar
 
 ```bash
-python baseline.py
+python src/train.py       # CV, treino final e models/model.joblib
+python src/inference.py   # submissions/submission.csv
 ```
 
-Treina um `HistGradientBoostingClassifier` sobre as features derivadas, imprime a acurácia por fold e
-grava `submission.csv` pronto para envio. O modelo trata NaN e categóricas nativamente, então não há
-etapa separada de imputação ou one-hot.
+`train.py` imprime a acurácia por fold e persiste o modelo; `inference.py` carrega esse modelo e gera a
+submissão, validando a ordem das linhas contra o `sample_submission.csv`. Os dois compartilham
+`features.py`, para que treino e predição vejam exatamente as mesmas colunas. O modelo trata NaN e
+categóricas nativamente, então não há etapa separada de imputação ou one-hot.
+
+Para nomear a submissão: `python src/inference.py exp002.csv`.
 
 A engenharia de features se apoia na estrutura do problema: `Cabin` dividida em deck/num/side,
 agregados de grupo e de sobrenome, gastos em `log1p` e a contagem de NaN da linha. O ponto central é o
@@ -36,7 +40,7 @@ path = kagglehub.competition_download('spaceship-titanic')
 ```
 
 Depois copie `train.csv`, `test.csv` e `sample_submission.csv` do caminho retornado
-(`~/.cache/kagglehub/competitions/spaceship-titanic/`) para a raiz deste repositório.
+(`~/.cache/kagglehub/competitions/spaceship-titanic/`) para a pasta `data/`.
 
 É preciso um token da API da Kaggle no ambiente e a conta precisa ter aceitado as regras na página da
 competição, senão o download retorna 403:
@@ -114,10 +118,25 @@ código deste repositório:
 ## Estrutura do repositório
 
 ```
-├── baseline.py            treino, validação cruzada e geração da submissão
+├── src/
+│   ├── features.py        engenharia de features, compartilhada
+│   ├── train.py           validação cruzada, treino final, modelo salvo
+│   └── inference.py       predição e geração da submissão
+├── experiments/
+│   ├── log.md             índice e tabela-resumo dos experimentos
+│   ├── TEMPLATE.md        modelo para uma nota nova
+│   └── 001-*.md           uma nota por experimento
+├── notebooks/             EDA
+├── data/                  CSVs da Kaggle (não versionados)
+├── models/                modelos treinados (não versionados)
+├── submissions/           arquivos de submissão (não versionados)
 ├── CLAUDE.md              orientações para o Claude Code
 ├── COMPETITION_RULES.md   regras oficiais na íntegra
 ├── README.md
-├── .gitignore             ignora dados, submissões, credenciais e modelos
-└── (CSVs baixados da Kaggle, não versionados)
+└── .gitignore
 ```
+
+## Anotando experimentos
+
+Cada tentativa vira uma nota em [`experiments/`](experiments/log.md), com a tabela-resumo em
+`log.md`. Anote também o que **não** funcionou — é o que evita repetir o mesmo caminho depois.

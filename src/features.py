@@ -1,26 +1,46 @@
-"""Baseline for the Spaceship Titanic competition.
+"""Feature engineering for the Spaceship Titanic dataset.
 
-Gradient boosting over engineered features, scored with 5-fold stratified CV
-(the competition metric is accuracy), then refit on all of train to write
-submission.csv.
-
-Run: python baseline.py
+Shared by training and inference so that both see identical columns. Nothing
+here touches the target.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data"
+MODELS = ROOT / "models"
+SUBMISSIONS = ROOT / "submissions"
 
 SEED = 42
 SPEND = ["RoomService", "FoodCourt", "ShoppingMall", "Spa", "VRDeck"]
 CATEGORICAL = ["HomePlanet", "Destination", "Deck", "Side", "CryoSleep", "VIP"]
+NUMERIC = [
+    "Age", "GroupSize", "GroupPos", "Solo", "CabinNum", "CabinSize",
+    "FamilySize", "TotalSpend", "NoSpend", "SpendCount", "IsChild",
+    "NaNCount", *SPEND, *[f"log_{c}" for c in [*SPEND, "TotalSpend"]],
+]
+
+
+def load(split: str) -> pd.DataFrame:
+    """Read one of the raw competition CSVs from data/."""
+    path = DATA / f"{split}.csv"
+    if not path.exists():
+        msg = (
+            f"{path} not found. Fetch the data first:\n"
+            "    import kagglehub; kagglehub.competition_download('spaceship-titanic')\n"
+            "then copy train.csv, test.csv and sample_submission.csv into data/."
+        )
+        raise FileNotFoundError(msg)
+    return pd.read_csv(path)
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Derive features from the raw columns. Nothing here touches the target."""
+    """Derive features from the raw columns."""
     df = df.copy()
 
     # PassengerId is gggg_pp: the group travels together, often as a family.
@@ -43,7 +63,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Cryosleep passengers are confined to their cabins, so they cannot bill
     # anything. That makes two imputations sound rather than merely convenient.
-    cryo = df["CryoSleep"] == True  # noqa: E712 — keep NaN out of the mask
+    cryo = df["CryoSleep"] == True  # noqa: E712 - keep NaN out of the mask
     df.loc[cryo, SPEND] = df.loc[cryo, SPEND].fillna(0.0)
     spent = df[SPEND].sum(axis=1, min_count=1) > 0
     df.loc[spent & df["CryoSleep"].isna(), "CryoSleep"] = False
@@ -73,55 +93,18 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def build_matrix(df: pd.DataFrame) -> pd.DataFrame:
     """Select the model's feature columns, in a fixed order."""
-    numeric = [
-        "Age", "GroupSize", "GroupPos", "Solo", "CabinNum", "CabinSize",
-        "FamilySize", "TotalSpend", "NoSpend", "SpendCount", "IsChild",
-        "NaNCount", *SPEND, *[f"log_{c}" for c in [*SPEND, "TotalSpend"]],
-    ]
-    return df[CATEGORICAL + numeric].copy()
+    return df[CATEGORICAL + NUMERIC].copy()
 
 
-def main() -> None:
-    train = add_features(pd.read_csv("train.csv"))
-    test = add_features(pd.read_csv("test.csv"))
+def align_categories(*matrices: pd.DataFrame) -> None:
+    """Give every matrix the same category levels, in place.
 
-    X = build_matrix(train)
-    y = train["Transported"].astype(int)
-    X_test = build_matrix(test)
-    # Keep the categorical level sets aligned between the two matrices.
+    Without this a level seen only in test would be encoded differently from
+    training, silently shifting the model's inputs.
+    """
     for col in CATEGORICAL:
-        levels = X[col].cat.categories.union(X_test[col].cat.categories)
-        X[col] = X[col].cat.set_categories(levels)
-        X_test[col] = X_test[col].cat.set_categories(levels)
-
-    # HistGradientBoosting handles NaN and categoricals natively, so no
-    # imputation or one-hot step is needed ahead of it.
-    model = HistGradientBoostingClassifier(
-        categorical_features="from_dtype",
-        max_iter=400,
-        learning_rate=0.06,
-        max_leaf_nodes=31,
-        min_samples_leaf=30,
-        l2_regularization=1.0,
-        early_stopping=True,
-        validation_fraction=0.1,
-        random_state=SEED,
-    )
-
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
-    scores = cross_val_score(model, X, y, cv=cv, scoring="accuracy", n_jobs=-1)
-    print(f"{X.shape[1]} features, {len(X)} rows")
-    print("CV accuracy per fold:", np.round(scores, 4))
-    print(f"CV accuracy: {scores.mean():.4f} +/- {scores.std():.4f}")
-
-    model.fit(X, y)
-    pred = model.predict(X_test).astype(bool)
-
-    submission = pd.DataFrame({"PassengerId": test["PassengerId"], "Transported": pred})
-    submission.to_csv("submission.csv", index=False)
-    print(f"\nWrote submission.csv: {len(submission)} rows, "
-          f"{pred.mean():.1%} predicted True")
-
-
-if __name__ == "__main__":
-    main()
+        levels = matrices[0][col].cat.categories
+        for m in matrices[1:]:
+            levels = levels.union(m[col].cat.categories)
+        for m in matrices:
+            m[col] = m[col].cat.set_categories(levels)

@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 A Kaggle **Spaceship Titanic** working folder (Getting Started competition, sponsored by Google LLC,
-https://www.kaggle.com/c/spaceship-titanic). The repo holds the three competition CSVs (untracked) and
-`baseline.py`, a working end-to-end solution.
+https://www.kaggle.com/c/spaceship-titanic). The repo holds a working end-to-end solution in `src/`, with
+the competition CSVs untracked in `data/`.
 
 **The task:** predict whether a passenger was transported to an alternate dimension during the
 Spaceship Titanic's collision with a spacetime anomaly. Binary classification on `Transported` (bool),
@@ -20,13 +20,19 @@ System Python already has what is needed — no venv or install step is set up:
 python 3.14  |  pandas 2.3.3  |  scikit-learn 1.9.0  |  numpy 2.3.5  |  kagglehub 1.0.2
 ```
 
-Run scripts directly. `python baseline.py` trains, prints 5-fold stratified CV accuracy, and writes
-`submission.csv`; it takes well under a minute. There are no tests, linters, or build targets to
-invoke; if you add any, document them here.
+```bash
+python src/train.py       # 5-fold stratified CV, refit, models/model.joblib
+python src/inference.py   # submissions/submission.csv (pass a filename to rename)
+```
+
+Both take well under a minute. `train.py` and `inference.py` import `features.py` by plain module name,
+which works because running a script puts its own directory on `sys.path` — run them as
+`python src/train.py`, not as `-m src.train`. There are no tests, linters, or build targets to invoke;
+if you add any, document them here.
 
 ## Current baseline
 
-`baseline.py` scores **0.8110 +/- 0.0092** CV accuracy with a `HistGradientBoostingClassifier` over 29
+`src/` scores **0.8110 +/- 0.0092** CV accuracy (public LB **0.80266**, submission 55590027) with a `HistGradientBoostingClassifier` over 29
 engineered features. It handles NaN and categoricals natively, so there is no imputation or one-hot
 step ahead of it — keep it that way unless you switch model families.
 
@@ -34,6 +40,13 @@ The one domain rule the feature code leans on: cryosleep passengers are confined
 cannot bill anything, so missing spend is zero for them and any passenger with spend was not in
 cryosleep. That recovers ~200 values without guessing. Beat the baseline before adding complexity —
 target encoding and stacking have historically bought very little here.
+
+## Recording experiments
+
+Every attempt gets a note in `experiments/`, numbered in sequence, with the summary table kept current
+in `experiments/log.md` — CV, public LB, commit and submission id. Record the failures too: knowing
+that an idea did not pay off is what stops it being retried weeks later. `experiments/TEMPLATE.md` is
+the blank form.
 
 ### Re-downloading the data
 

@@ -1,25 +1,30 @@
 # Competition data — NOT redistributable.
 # Kaggle's rules forbid providing the Competition Data to anyone who has not
 # accepted them. Re-fetch instead: kagglehub.competition_download('spaceship-titanic')
-*.csv
+data/*
+!data/.gitkeep
 
-# Submissions (derived from the data, regenerate them from code)
-submission*.csv
-subm/
-outputs/
+# Submissions are derived from the data; regenerate them from src/inference.py
+submissions/*
+!submissions/.gitkeep
 
-# Credentials — never commit a Kaggle token
-kaggle.json
-.kaggle/
-.env
-*.pem
-
-# Models and other large artifacts
+# Trained models
+models/*
+!models/.gitkeep
 *.pkl
 *.joblib
 *.h5
 *.onnx
-models/
+
+# Any stray CSV outside data/ is assumed to be competition-derived
+*.csv
+
+# Credentials — never commit a Kaggle token
+kaggle.json
+.kaggle/
+access_token
+.env
+*.pem
 
 # Python
 __pycache__/
