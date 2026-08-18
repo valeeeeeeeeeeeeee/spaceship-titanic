@@ -7,7 +7,23 @@ Started, patrocinada pela Google LLC).
 da Spaceship Titanic com uma anomalia do espaço-tempo. Classificação binária sobre `Transported`, a
 partir de registros pessoais recuperados do sistema de bordo danificado.
 
-> **Status:** apenas dados e documentação. Ainda não há código de modelagem.
+> **Status:** baseline funcionando — `baseline.py`, com **0,8110 ± 0,0092** de acurácia em
+> validação cruzada 5-fold estratificada.
+
+## Como rodar
+
+```bash
+python baseline.py
+```
+
+Treina um `HistGradientBoostingClassifier` sobre as features derivadas, imprime a acurácia por fold e
+grava `submission.csv` pronto para envio. O modelo trata NaN e categóricas nativamente, então não há
+etapa separada de imputação ou one-hot.
+
+A engenharia de features se apoia na estrutura do problema: `Cabin` dividida em deck/num/side,
+agregados de grupo e de sobrenome, gastos em `log1p` e a contagem de NaN da linha. O ponto central é o
+criosono — como esses passageiros ficam confinados à cabine e não consomem nada, gasto ausente vira
+zero para eles, e quem gastou qualquer coisa não estava em criosono.
 
 ## Dados
 
@@ -98,6 +114,7 @@ código deste repositório:
 ## Estrutura do repositório
 
 ```
+├── baseline.py            treino, validação cruzada e geração da submissão
 ├── CLAUDE.md              orientações para o Claude Code
 ├── COMPETITION_RULES.md   regras oficiais na íntegra
 ├── README.md
