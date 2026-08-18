@@ -16,6 +16,7 @@ retried two weeks later.
 | [002](002-group-features.md) | Group imputation + group aggregates | 0.8093–0.8105 | — | **rejected** | not submitted |
 | [003](003-hyperparameter-search.md) | Randomised search on HGB | 0.8128 ± 0.0089 | — | folded into 004 | not submitted |
 | [004](004-catboost-blend.md) | CatBoost 0.7 + HGB 0.3 blend | 0.8184 OOF | **0.80570** | **adopted** | 55591122 |
+| [005](005-catboost-tuning.md) | Randomised search on CatBoost | 0.8133 OOF | — | **rejected** | not submitted |
 
 Current best: **004**, the blend now in `src/`.
 
@@ -26,6 +27,9 @@ Current best: **004**, the blend now in `src/`.
 - **Group and family aggregates** on top of `GroupSize` / `CabinSize`. Adding them made CV slightly
   worse, the usual signature of dilution.
 - **LightGBM in the blend.** It earned weight zero against CatBoost and HGB — see 004.
+- **Searching CatBoost's hyperparameters** with 40 candidates on a single 5-fold partition. It returned
+  a configuration 0.0034 *worse* than the hand-picked one — see 005. A retry needs repeated folds
+  inside the search, not just at the end.
 
 ## Context for reading the numbers
 
@@ -37,6 +41,7 @@ Current best: **004**, the blend now in `src/`.
   **is not signal** — do not chase it.
 - Never quote a search's `best_score_` as the model's accuracy. Selecting the maximum over many
   candidates on identical folds fits the estimate to those folds; re-measure the winner on fresh ones.
-  In 003 that bias was 0.0011.
+  In 003 that bias was 0.0011; in 005 it was 0.0017, and acting on it would have shipped a worse model
+  while reporting an improvement.
 - 10 submissions per day. Only submit what CV says is a real improvement.
 - To generate a submission named after an experiment: `python src/inference.py exp005.csv`.

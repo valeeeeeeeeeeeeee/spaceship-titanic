@@ -51,8 +51,9 @@ cryosleep. That recovers ~200 values without guessing.
 
 **Read `experiments/log.md` before trying to improve this.** Several obvious ideas are already ruled
 out with measurements: group-based imputation (even where provably exact), group and family
-aggregates, and LightGBM in the blend. The clearest remaining headroom is tuning CatBoost, whose
-parameters were guessed rather than searched despite it carrying 70% of the prediction.
+aggregates, LightGBM in the blend, and a randomised search over CatBoost's hyperparameters — which
+returned a configuration measurably worse than the hand-picked one. Four of five experiments so far
+have been negative; treat "obvious" improvements here as unlikely until measured.
 
 Two measurement rules that these experiments turned on: single 5-fold CV has a standard error near
 0.004, the same size as the effects worth chasing, so comparisons need repeated folds; and a search's
