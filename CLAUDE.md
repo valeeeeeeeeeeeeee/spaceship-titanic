@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language
+
+**Write all output in English** — chat responses, code, comments, docstrings, commit messages,
+documentation, and experiment notes. This holds regardless of the language the request is written in.
+
 ## What this is
 
 A Kaggle **Spaceship Titanic** working folder (Getting Started competition, sponsored by Google LLC,
