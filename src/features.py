@@ -13,7 +13,6 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
-MODELS = ROOT / "models"
 SUBMISSIONS = ROOT / "submissions"
 
 SEED = 42
@@ -95,6 +94,17 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 def build_matrix(df: pd.DataFrame) -> pd.DataFrame:
     """Select the model's feature columns, in a fixed order."""
     return df[CATEGORICAL + NUMERIC].copy()
+
+
+def to_catboost(X: pd.DataFrame) -> pd.DataFrame:
+    """CatBoost wants categoricals as plain strings with no NaN."""
+    X = X.copy()
+    for col in CATEGORICAL:
+        X[col] = X[col].astype(str).fillna("NA")
+    return X
+
+
+CAT_IDX = [(CATEGORICAL + NUMERIC).index(c) for c in CATEGORICAL]
 
 
 def align_categories(*matrices: pd.DataFrame) -> None:

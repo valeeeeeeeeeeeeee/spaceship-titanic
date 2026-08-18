@@ -7,27 +7,36 @@ Started, sponsored by Google LLC).
 Spaceship Titanic's collision with a spacetime anomaly. Binary classification on `Transported`, from
 personal records recovered from the ship's damaged computer system.
 
-> **Status:** working baseline in `src/`, at **0.8110 ± 0.0092** accuracy under 5-fold stratified
-> cross-validation. Public leaderboard: **0.80266**.
+> **Status:** CatBoost + HistGradientBoosting blend in `src/`, at **0.8184** out-of-fold accuracy.
+> Public leaderboard: **0.80570**.
 
 ## Running it
 
 ```bash
-python src/train.py       # CV, final fit, models/model.joblib
-python src/inference.py   # submissions/submission.csv
+python src/train.py            # cross-validation, final fit, model.joblib
+python src/train.py --no-cv    # skip cross-validation (much faster)
+python src/inference.py        # submissions/submission.csv
 ```
 
-`train.py` prints per-fold accuracy and persists the model; `inference.py` loads that model and writes
-the submission, checking its row order against `sample_submission.csv`. Both import `features.py`, so
-training and prediction see exactly the same columns. The model handles NaN and categoricals natively,
-so there is no separate imputation or one-hot step.
+`train.py` reports out-of-fold accuracy for each model and for the blend, then persists both models
+with their blend weight; `inference.py` loads them, averages the probabilities, and writes the
+submission, checking its row order against `sample_submission.csv`. Both import `features.py`, so
+training and prediction see exactly the same columns. Neither model needs imputation or one-hot
+encoding — both handle NaN and categoricals natively.
 
-To name a submission: `python src/inference.py exp002.csv`.
+The prediction is **0.7 × CatBoost + 0.3 × HistGradientBoosting**. CatBoost is the stronger of the two
+on its own; the weight sits on a plateau rather than a tuned point, so it is not fragile. See
+[`experiments/004`](experiments/004-catboost-blend.md).
+
+To name a submission: `python src/inference.py exp005.csv`.
 
 Feature engineering leans on the structure of the problem: `Cabin` split into deck/num/side, group and
 surname aggregates, `log1p` spend totals, and the row's NaN count. The central piece is cryosleep —
 those passengers are confined to their cabins and cannot bill anything, so missing spend is zero for
 them, and any passenger with spend was not in cryosleep.
+
+Richer group features were tried and rejected; read
+[`experiments/002`](experiments/002-group-features.md) before reaching for them again.
 
 ## Data
 
@@ -92,7 +101,7 @@ Never write the token into any file in this repository.
 Python 3.14 with:
 
 ```
-pandas 2.3.3   scikit-learn 1.9.0   numpy 2.3.5   kagglehub 1.0.2
+pandas 2.3.3   scikit-learn 1.9.0   numpy 2.3.5   catboost 1.2.10   kagglehub 1.0.2
 ```
 
 ## Submission
@@ -126,11 +135,10 @@ the code in this repository:
 ├── experiments/
 │   ├── log.md             index and summary table
 │   ├── TEMPLATE.md        blank form for a new note
-│   └── 001-*.md           one note per experiment
-├── notebooks/             EDA
+│   └── 00N-*.md           one note per experiment
 ├── data/                  Kaggle CSVs (untracked, created on run)
-├── models/                trained models (untracked)
 ├── submissions/           submission files (untracked)
+├── model.joblib           trained blend (untracked, written by train.py)
 ├── CLAUDE.md              guidance for Claude Code
 ├── COMPETITION_RULES.md   full official rules
 ├── README.md

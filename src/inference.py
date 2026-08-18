@@ -1,8 +1,8 @@
 """Predict the test set and write a Kaggle-ready submission.
 
-Loads the model persisted by train.py, so run that first.
+Loads the blend persisted by train.py, so run that first.
 
-Run: python src/inference.py [nome-do-arquivo.csv]
+Run: python src/inference.py [filename.csv]
 """
 
 from __future__ import annotations
@@ -12,7 +12,14 @@ import sys
 import joblib
 import pandas as pd
 
-from features import CATEGORICAL, SUBMISSIONS, add_features, build_matrix, load
+from features import (
+    CATEGORICAL,
+    SUBMISSIONS,
+    add_features,
+    build_matrix,
+    load,
+    to_catboost,
+)
 from train import MODEL_PATH
 
 
@@ -22,7 +29,9 @@ def main() -> None:
         raise FileNotFoundError(msg)
 
     bundle = joblib.load(MODEL_PATH)
-    model, levels = bundle["model"], bundle["levels"]
+    hgb, cat, weight, levels = (
+        bundle["hgb"], bundle["cat"], bundle["hgb_weight"], bundle["levels"],
+    )
 
     test = add_features(load("test"))
     X_test = build_matrix(test)
@@ -30,7 +39,11 @@ def main() -> None:
     for col in CATEGORICAL:
         X_test[col] = X_test[col].cat.set_categories(levels[col])
 
-    pred = model.predict(X_test).astype(bool)
+    proba = (
+        weight * hgb.predict_proba(X_test)[:, 1]
+        + (1 - weight) * cat.predict_proba(to_catboost(X_test))[:, 1]
+    )
+    pred = proba > 0.5
     submission = pd.DataFrame({"PassengerId": test["PassengerId"], "Transported": pred})
 
     # The submission must line up row for row with sample_submission.csv.

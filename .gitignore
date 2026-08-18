@@ -7,7 +7,6 @@ data/
 submissions/
 
 # Trained models
-models/
 *.pkl
 *.joblib
 *.h5

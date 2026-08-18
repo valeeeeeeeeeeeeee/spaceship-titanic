@@ -22,29 +22,42 @@ from personal records recovered from the ship's damaged computer system.
 System Python already has what is needed — no venv or install step is set up:
 
 ```
-python 3.14  |  pandas 2.3.3  |  scikit-learn 1.9.0  |  numpy 2.3.5  |  kagglehub 1.0.2
+python 3.14 | pandas 2.3.3 | scikit-learn 1.9.0 | numpy 2.3.5 | catboost 1.2.10 | kagglehub 1.0.2
 ```
 
 ```bash
-python src/train.py       # 5-fold stratified CV, refit, models/model.joblib
-python src/inference.py   # submissions/submission.csv (pass a filename to rename)
+python src/train.py            # out-of-fold CV, refit, model.joblib
+python src/train.py --no-cv    # skip CV (CatBoost makes the CV pass the slow part)
+python src/inference.py        # submissions/submission.csv (pass a filename to rename)
 ```
 
-Both take well under a minute. `train.py` and `inference.py` import `features.py` by plain module name,
+`--no-cv` finishes in seconds; the full CV pass fits ten models and takes a few minutes.
+
+`train.py` and `inference.py` import `features.py` by plain module name,
 which works because running a script puts its own directory on `sys.path` — run them as
 `python src/train.py`, not as `-m src.train`. There are no tests, linters, or build targets to invoke;
 if you add any, document them here.
 
-## Current baseline
+## Current model
 
-`src/` scores **0.8110 +/- 0.0092** CV accuracy (public LB **0.80266**, submission 55590027) with a `HistGradientBoostingClassifier` over 29
-engineered features. It handles NaN and categoricals natively, so there is no imputation or one-hot
-step ahead of it — keep it that way unless you switch model families.
+`src/` scores **0.8184** out-of-fold accuracy (public LB **0.80570**, submission 55591122) with a blend
+of **0.7 CatBoost + 0.3 HistGradientBoosting** over 29 engineered features. Both handle NaN and
+categoricals natively, so there is no imputation or one-hot step — keep it that way unless you switch
+model families.
 
 The one domain rule the feature code leans on: cryosleep passengers are confined to their cabins and
 cannot bill anything, so missing spend is zero for them and any passenger with spend was not in
-cryosleep. That recovers ~200 values without guessing. Beat the baseline before adding complexity —
-target encoding and stacking have historically bought very little here.
+cryosleep. That recovers ~200 values without guessing.
+
+**Read `experiments/log.md` before trying to improve this.** Several obvious ideas are already ruled
+out with measurements: group-based imputation (even where provably exact), group and family
+aggregates, and LightGBM in the blend. The clearest remaining headroom is tuning CatBoost, whose
+parameters were guessed rather than searched despite it carrying 70% of the prediction.
+
+Two measurement rules that these experiments turned on: single 5-fold CV has a standard error near
+0.004, the same size as the effects worth chasing, so comparisons need repeated folds; and a search's
+`best_score_` is optimistic by roughly 0.001 because it selects the maximum over candidates scored on
+identical folds.
 
 ## Recording experiments
 
