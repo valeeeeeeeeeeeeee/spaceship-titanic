@@ -1,7 +1,6 @@
 # Spaceship Titanic — Kaggle
 
-Solution for the [Spaceship Titanic](https://www.kaggle.com/c/spaceship-titanic) competition (Getting
-Started, sponsored by Google LLC).
+Solution for the [Spaceship Titanic](https://www.kaggle.com/c/spaceship-titanic) competition.
 
 **The task:** predict whether a passenger was transported to an alternate dimension during the
 Spaceship Titanic's collision with a spacetime anomaly. Binary classification on `Transported`, from
