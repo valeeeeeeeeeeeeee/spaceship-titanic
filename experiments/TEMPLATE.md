@@ -1,30 +1,30 @@
-# NNN — título curto do experimento
+# NNN — short experiment title
 
-- **Data:** AAAA-MM-DD
+- **Date:** YYYY-MM-DD
 - **Commit:** `xxxxxxx`
-- **Baseia-se em:** NNN (ou "do zero")
-- **CV:** 0,0000 ± 0,0000 — 5-fold estratificado, seed 42
-- **LB público:** 0,00000 (submissão nnnnnnnn) — ou "não submetido"
+- **Builds on:** NNN (or "from scratch")
+- **CV:** 0.0000 ± 0.0000 — 5-fold stratified, seed 42
+- **Public LB:** 0.00000 (submission nnnnnnnn) — or "not submitted"
 
-## Hipótese
+## Hypothesis
 
-O que se esperava melhorar, e por quê. Uma ou duas frases. Se não havia hipótese, diga isso — vale
-saber que foi tentativa e erro.
+What this was expected to improve, and why. One or two sentences. If there was no hypothesis, say so —
+it is worth knowing that something was trial and error.
 
-## O que mudou
+## What changed
 
-Diferença concreta em relação ao experimento anterior. Features novas, hiperparâmetros, modelo.
+The concrete difference from the previous experiment. New features, hyperparameters, model.
 
-## Resultado
+## Result
 
-Números por fold, comparação com o anterior, e se a diferença é maior que o ruído (~0,009 de desvio
-entre folds).
+Per-fold numbers, comparison with the previous experiment, and whether the difference exceeds the noise
+(~0.009 standard deviation across folds).
 
-## Conclusão
+## Conclusion
 
-Manter, descartar ou investigar mais? Se descartado, **por quê** — é isso que evita repetir o
-caminho depois.
+Keep, drop, or investigate further? If dropped, **why** — that is what stops the path being retried
+later.
 
-## Próximo passo
+## Next step
 
-O que esse resultado sugere tentar em seguida.
+What this result suggests trying next.

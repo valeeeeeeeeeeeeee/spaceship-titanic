@@ -1,142 +1,143 @@
 # Spaceship Titanic — Kaggle
 
-Solução para a competição [Spaceship Titanic](https://www.kaggle.com/c/spaceship-titanic) (Getting
-Started, patrocinada pela Google LLC).
+Solution for the [Spaceship Titanic](https://www.kaggle.com/c/spaceship-titanic) competition (Getting
+Started, sponsored by Google LLC).
 
-**A tarefa:** prever se um passageiro foi transportado para uma dimensão alternativa durante a colisão
-da Spaceship Titanic com uma anomalia do espaço-tempo. Classificação binária sobre `Transported`, a
-partir de registros pessoais recuperados do sistema de bordo danificado.
+**The task:** predict whether a passenger was transported to an alternate dimension during the
+Spaceship Titanic's collision with a spacetime anomaly. Binary classification on `Transported`, from
+personal records recovered from the ship's damaged computer system.
 
-> **Status:** baseline funcionando — `baseline.py`, com **0,8110 ± 0,0092** de acurácia em
-> validação cruzada 5-fold estratificada.
+> **Status:** working baseline in `src/`, at **0.8110 ± 0.0092** accuracy under 5-fold stratified
+> cross-validation. Public leaderboard: **0.80266**.
 
-## Como rodar
+## Running it
 
 ```bash
-python src/train.py       # CV, treino final e models/model.joblib
+python src/train.py       # CV, final fit, models/model.joblib
 python src/inference.py   # submissions/submission.csv
 ```
 
-`train.py` imprime a acurácia por fold e persiste o modelo; `inference.py` carrega esse modelo e gera a
-submissão, validando a ordem das linhas contra o `sample_submission.csv`. Os dois compartilham
-`features.py`, para que treino e predição vejam exatamente as mesmas colunas. O modelo trata NaN e
-categóricas nativamente, então não há etapa separada de imputação ou one-hot.
+`train.py` prints per-fold accuracy and persists the model; `inference.py` loads that model and writes
+the submission, checking its row order against `sample_submission.csv`. Both import `features.py`, so
+training and prediction see exactly the same columns. The model handles NaN and categoricals natively,
+so there is no separate imputation or one-hot step.
 
-Para nomear a submissão: `python src/inference.py exp002.csv`.
+To name a submission: `python src/inference.py exp002.csv`.
 
-A engenharia de features se apoia na estrutura do problema: `Cabin` dividida em deck/num/side,
-agregados de grupo e de sobrenome, gastos em `log1p` e a contagem de NaN da linha. O ponto central é o
-criosono — como esses passageiros ficam confinados à cabine e não consomem nada, gasto ausente vira
-zero para eles, e quem gastou qualquer coisa não estava em criosono.
+Feature engineering leans on the structure of the problem: `Cabin` split into deck/num/side, group and
+surname aggregates, `log1p` spend totals, and the row's NaN count. The central piece is cryosleep —
+those passengers are confined to their cabins and cannot bill anything, so missing spend is zero for
+them, and any passenger with spend was not in cryosleep.
 
-## Dados
+## Data
 
-Os CSVs **não são versionados** — as regras da competição proíbem redistribuir os dados a quem não
-aceitou os termos. Baixe-os direto da Kaggle:
+The CSVs are **not tracked** — the competition rules forbid redistributing the data to anyone who has
+not accepted the terms. Fetch them from Kaggle:
 
 ```python
 import kagglehub
 path = kagglehub.competition_download('spaceship-titanic')
 ```
 
-Depois copie `train.csv`, `test.csv` e `sample_submission.csv` do caminho retornado
-(`~/.cache/kagglehub/competitions/spaceship-titanic/`) para a pasta `data/`.
+Then copy `train.csv`, `test.csv` and `sample_submission.csv` from the returned path
+(`~/.cache/kagglehub/competitions/spaceship-titanic/`) into `data/`.
 
-É preciso um token da API da Kaggle no ambiente e a conta precisa ter aceitado as regras na página da
-competição, senão o download retorna 403:
+This needs a Kaggle API token in the environment, and the account must have accepted the rules on the
+competition page — otherwise the download 403s:
 
 ```bash
-# formato novo (KGAT_…), dispensa username
+# current format (KGAT_…), no username needed
 export KAGGLE_API_TOKEN="KGAT_…"
-# ou o formato legado: ~/.kaggle/kaggle.json
+# or the legacy file: ~/.kaggle/kaggle.json
 ```
 
-O token nunca deve ser gravado em nenhum arquivo do repositório.
+Never write the token into any file in this repository.
 
-### Estrutura dos arquivos
+### Files
 
-| Arquivo | Linhas | Colunas | Descrição |
+| File | Rows | Cols | Description |
 |---|---|---|---|
-| `train.csv` | 8693 | 14 | ~2/3 dos passageiros, com o alvo `Transported` (~50/50, 50,4% True) |
-| `test.csv` | 4277 | 13 | ~1/3 dos passageiros, idêntico ao treino menos o alvo |
-| `sample_submission.csv` | 4277 | 2 | formato de submissão, já na mesma ordem de linhas do `test.csv` |
+| `train.csv` | 8693 | 14 | ~2/3 of the passengers, with the `Transported` target (~50/50, 50.4% True) |
+| `test.csv` | 4277 | 13 | ~1/3 of the passengers, identical to train minus the target |
+| `sample_submission.csv` | 4277 | 2 | submission format, already in the same row order as `test.csv` |
 
-### Colunas
+### Columns
 
-- **`PassengerId`** — id único no formato `gggg_pp`, onde `gggg` é o grupo com que o passageiro viaja e
-  `pp` é seu número dentro do grupo. Membros de um grupo costumam ser familiares, mas nem sempre.
-- **`HomePlanet`** — planeta de origem, em geral o de residência permanente. *Europa, Earth, Mars.*
-- **`CryoSleep`** — se o passageiro optou por animação suspensa durante a viagem. Quem está em criosono
-  fica **confinado à cabine** e por isso não consome nenhuma amenidade.
-- **`Cabin`** — `deck/num/side`, onde *side* é `P` (Port) ou `S` (Starboard). Decks de `A` a `G`, mais `T`.
-- **`Destination`** — planeta de desembarque. *TRAPPIST-1e, PSO J318.5-22, 55 Cancri e.*
-- **`Age`** — idade do passageiro.
-- **`VIP`** — se pagou pelo serviço VIP da viagem.
-- **`RoomService`, `FoodCourt`, `ShoppingMall`, `Spa`, `VRDeck`** — valor gasto em cada amenidade de luxo
-  da nave. Fortemente concentrados em zero.
-- **`Name`** — nome e sobrenome. Presente também no teste, então agregados por sobrenome são viáveis.
-- **`Transported`** — se o passageiro foi transportado para outra dimensão. **É o alvo.**
+- **`PassengerId`** — unique id of the form `gggg_pp`, where `gggg` is the group the passenger travels
+  with and `pp` is their number within it. Group members are often family, but not always.
+- **`HomePlanet`** — planet departed from, usually the planet of permanent residence. *Europa, Earth,
+  Mars.*
+- **`CryoSleep`** — whether the passenger chose suspended animation for the voyage. Passengers in
+  cryosleep are **confined to their cabins** and therefore bill nothing.
+- **`Cabin`** — `deck/num/side`, where *side* is `P` (Port) or `S` (Starboard). Decks `A` to `G`, plus `T`.
+- **`Destination`** — planet of debarkation. *TRAPPIST-1e, PSO J318.5-22, 55 Cancri e.*
+- **`Age`** — passenger age.
+- **`VIP`** — whether they paid for VIP service on the voyage.
+- **`RoomService`, `FoodCourt`, `ShoppingMall`, `Spa`, `VRDeck`** — amount billed at each of the ship's
+  luxury amenities. Heavily concentrated at zero.
+- **`Name`** — first and last name. Present in test too, so surname aggregates are viable.
+- **`Transported`** — whether the passenger was transported to another dimension. **The target.**
 
-### Dois detalhes medidos nos dados
+### Two things measured in the data
 
-- **A divisão treino/teste é por grupo:** nenhum `gggg` aparece nos dois arquivos. Não dá para usar o
-  rótulo conhecido de um companheiro de grupo — features de grupo precisam ser agregados internos
-  (tamanho, gasto, planeta), sem vazamento do alvo.
-- **Valores ausentes em toda parte:** cada coluna exceto `PassengerId` tem ~2% de NaN nos dois splits
-  (179–217 por coluna no treino, 80–106 no teste). Imputação é obrigatória, e vale testar o próprio
-  padrão de ausência como feature.
+- **The train/test split is by group:** no `gggg` appears in both files. A groupmate's known label is
+  not available — group features must be within-split aggregates (size, spend, planet), with no target
+  leakage.
+- **Missing values everywhere:** every column except `PassengerId` has ~2% NaN in both splits (179–217
+  per column in train, 80–106 in test). Imputation is mandatory, and the missingness pattern itself is
+  worth testing as a feature.
 
-## Ambiente
+## Environment
 
-Python 3.14 com:
+Python 3.14 with:
 
 ```
 pandas 2.3.3   scikit-learn 1.9.0   numpy 2.3.5   kagglehub 1.0.2
 ```
 
-## Submissão
+## Submission
 
-O arquivo precisa ter duas colunas — `PassengerId` e `Transported` — com 4277 linhas na mesma ordem do
-`test.csv`. `Transported` deve ser serializado como `True`/`False`, não `1`/`0`.
+The file needs two columns — `PassengerId` and `Transported` — with 4277 rows in the same order as
+`test.csv`. `Transported` must serialise as `True`/`False`, not `1`/`0`.
 
-O limite é de **10 submissões por dia**.
+The limit is **10 submissions per day**.
 
-## Regras da competição
+## Competition rules
 
-O texto oficial completo está em [`COMPETITION_RULES.md`](COMPETITION_RULES.md). Os pontos que afetam o
-código deste repositório:
+The full official text is in [`COMPETITION_RULES.md`](COMPETITION_RULES.md). The points that bear on
+the code in this repository:
 
-- Não é permitido **rotulagem manual** nem predição humana dos registros de teste.
-- Código da competição **não pode ser compartilhado privadamente** fora da equipe; o compartilhamento
-  público deve ocorrer no fórum ou nos notebooks da Kaggle, sob licença aprovada pela OSI.
-- Dependências open source precisam de licença aprovada pela OSI, sem restrição de uso comercial.
-- **Dados externos** só são permitidos se forem públicos e igualmente acessíveis a todos os
-  participantes, sem custo.
-- Ferramentas de **AutoML** são explicitamente permitidas.
-- Os dados não podem ser redistribuídos — daí o `.gitignore`.
+- **Hand labelling** and human prediction of the test records are not permitted.
+- Competition code **may not be shared privately** outside the team; public sharing must happen on
+  Kaggle's forum or notebooks, under an OSI-approved licence.
+- Open source dependencies need an OSI-approved licence with no commercial-use restriction.
+- **External data** is allowed only if it is public and equally accessible to all participants, free of
+  charge.
+- **AutoML** tools are explicitly permitted.
+- The data may not be redistributed — hence the `.gitignore`.
 
-## Estrutura do repositório
+## Repository layout
 
 ```
 ├── src/
-│   ├── features.py        engenharia de features, compartilhada
-│   ├── train.py           validação cruzada, treino final, modelo salvo
-│   └── inference.py       predição e geração da submissão
+│   ├── features.py        feature engineering, shared
+│   ├── train.py           cross-validation, final fit, saved model
+│   └── inference.py       prediction and submission file
 ├── experiments/
-│   ├── log.md             índice e tabela-resumo dos experimentos
-│   ├── TEMPLATE.md        modelo para uma nota nova
-│   └── 001-*.md           uma nota por experimento
+│   ├── log.md             index and summary table
+│   ├── TEMPLATE.md        blank form for a new note
+│   └── 001-*.md           one note per experiment
 ├── notebooks/             EDA
-├── data/                  CSVs da Kaggle (não versionados, criados ao rodar)
-├── models/                modelos treinados (não versionados)
-├── submissions/           arquivos de submissão (não versionados)
-├── CLAUDE.md              orientações para o Claude Code
-├── COMPETITION_RULES.md   regras oficiais na íntegra
+├── data/                  Kaggle CSVs (untracked, created on run)
+├── models/                trained models (untracked)
+├── submissions/           submission files (untracked)
+├── CLAUDE.md              guidance for Claude Code
+├── COMPETITION_RULES.md   full official rules
 ├── README.md
 └── .gitignore
 ```
 
-## Anotando experimentos
+## Recording experiments
 
-Cada tentativa vira uma nota em [`experiments/`](experiments/log.md), com a tabela-resumo em
-`log.md`. Anote também o que **não** funcionou — é o que evita repetir o mesmo caminho depois.
+Every attempt becomes a note in [`experiments/`](experiments/log.md), with the summary table in
+`log.md`. Record what did **not** work too — that is what stops the same path being retried later.

@@ -1,24 +1,24 @@
-# Notas de experimentos
+# Experiment log
 
-Registro do que foi tentado, o que funcionou e o que não funcionou. Um arquivo por experimento,
-numerado em sequência: `001-baseline-hgb.md`, `002-….md`. O modelo em branco está em
-[`TEMPLATE.md`](TEMPLATE.md). Este arquivo é o índice.
+A record of what was tried, what worked and what did not. One file per experiment, numbered in
+sequence: `001-baseline-hgb.md`, `002-….md`. The blank form is in [`TEMPLATE.md`](TEMPLATE.md). This
+file is the index.
 
-A regra que faz essas notas valerem alguma coisa: **anote também o que falhou**. Saber que target
-encoding não ajudou vale tanto quanto saber que o criosono ajudou — evita repetir o mesmo caminho
-daqui a duas semanas.
+The rule that makes these notes worth keeping: **write down the failures too**. Knowing that target
+encoding did not help is worth as much as knowing that cryosleep did — it stops the same path being
+retried two weeks later.
 
-## Resumo
+## Summary
 
-| # | Experimento | CV (acurácia) | LB público | Δ vs. anterior | Commit | Submissão |
+| # | Experiment | CV (accuracy) | Public LB | Δ vs. previous | Commit | Submission |
 |---|---|---|---|---|---|---|
-| [001](001-baseline-hgb.md) | HistGradientBoosting, 29 features | 0,8110 ± 0,0092 | **0,80266** | — | `6ffa9a1` | 55590027 |
+| [001](001-baseline-hgb.md) | HistGradientBoosting, 29 features | 0.8110 ± 0.0092 | **0.80266** | — | `6ffa9a1` | 55590027 |
 
-## Referências de contexto
+## Context for reading the numbers
 
-- CV local usa 5-fold estratificado, `random_state=42`. Números de CV só são comparáveis entre si se
-  o esquema de validação for o mesmo — se mudar o número de folds ou a semente, diga isso na nota.
-- O leaderboard público cobre apenas parte do test set. Com desvio-padrão de ~0,009 entre folds, uma
-  diferença de 0,002–0,003 entre dois experimentos **não é sinal** — não persiga essas variações.
-- Limite de 10 submissões por dia. Só submeta o que a CV indicar como melhoria real.
-- Para gerar uma submissão nomeada por experimento: `python src/inference.py exp002.csv`.
+- Local CV is 5-fold stratified with `random_state=42`. CV numbers only compare to each other if the
+  validation scheme is the same — if you change the fold count or the seed, say so in the note.
+- The public leaderboard covers only part of the test set. With ~0.009 standard deviation across folds,
+  a 0.002–0.003 difference between two experiments **is not signal** — do not chase it.
+- 10 submissions per day. Only submit what CV says is a real improvement.
+- To generate a submission named after an experiment: `python src/inference.py exp002.csv`.

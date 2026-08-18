@@ -1,43 +1,43 @@
-# 001 — Baseline: HistGradientBoosting com 29 features
+# 001 — Baseline: HistGradientBoosting with 29 features
 
-- **Data:** 2026-08-17
-- **Commit:** `6ffa9a1` (código depois movido para `src/` sem mudança de resultado)
-- **Baseia-se em:** do zero
-- **CV:** 0,8110 ± 0,0092 — 5-fold estratificado, seed 42
-- **LB público:** 0,80266 (submissão 55590027)
+- **Date:** 2026-08-17
+- **Commit:** `6ffa9a1` (code later moved into `src/` with no change in results)
+- **Builds on:** from scratch
+- **CV:** 0.8110 ± 0.0092 — 5-fold stratified, seed 42
+- **Public LB:** 0.80266 (submission 55590027)
 
-## Hipótese
+## Hypothesis
 
-Estabelecer um piso confiável antes de otimizar. A escolha do `HistGradientBoostingClassifier` não foi
-por acaso: ele trata NaN e categóricas nativamente, e como ~2% de **toda** coluna está ausente nos dois
-splits, evitar uma etapa de imputação arbitrária significa deixar o modelo aprender a direção do desvio
-de cada ausência em vez de receber uma mediana inventada.
+Establish a reliable floor before optimising anything. `HistGradientBoostingClassifier` was not an
+arbitrary pick: it handles NaN and categoricals natively, and since ~2% of **every** column is missing
+in both splits, skipping an arbitrary imputation step lets the model learn the direction each missing
+value implies instead of receiving an invented median.
 
-## O que mudou
+## What changed
 
-Primeiro experimento. Features (29 no total):
+First experiment. Features (29 in total):
 
-- **Grupo:** `Group` e `GroupPos` extraídos de `PassengerId` (`gggg_pp`), `GroupSize`, `Solo`.
-- **Cabine:** `Cabin` dividida em `Deck` / `CabinNum` / `Side`, mais `CabinSize` (quantas pessoas na
-  mesma cabine exata).
-- **Família:** `Surname` extraído de `Name`, com `FamilySize`. Pega famílias que o id de grupo separa.
-- **Gastos:** `TotalSpend`, `SpendCount`, `NoSpend`, e `log1p` das cinco colunas de amenidade mais do
-  total — elas são fortemente concentradas em zero e com cauda longa.
-- **Ausências:** `NaNCount` por linha, testando o próprio padrão de ausência como sinal.
-- **Idade:** `IsChild` (< 13 anos).
+- **Group:** `Group` and `GroupPos` parsed from `PassengerId` (`gggg_pp`), `GroupSize`, `Solo`.
+- **Cabin:** `Cabin` split into `Deck` / `CabinNum` / `Side`, plus `CabinSize` (how many people share
+  the exact cabin).
+- **Family:** `Surname` from `Name`, with `FamilySize`. Catches families that the group id splits.
+- **Spend:** `TotalSpend`, `SpendCount`, `NoSpend`, and `log1p` of the five amenity columns and the
+  total — they are heavily zero-inflated with a long tail.
+- **Missingness:** `NaNCount` per row, testing the missingness pattern itself as signal.
+- **Age:** `IsChild` (under 13).
 
-**A regra de domínio que mais rendeu:** passageiros em criosono ficam confinados à cabine e não
-conseguem consumir nada. Isso torna duas imputações corretas, não apenas convenientes:
+**The domain rule that paid off most:** cryosleep passengers are confined to their cabins and cannot
+bill anything. That makes two imputations correct rather than merely convenient:
 
-1. gasto ausente vira **zero** para quem está em criosono;
-2. quem gastou qualquer coisa **não** estava em criosono.
+1. missing spend becomes **zero** for anyone in cryosleep;
+2. anyone with spend was **not** in cryosleep.
 
-São ~200 valores recuperados sem chute.
+That recovers ~200 values without guessing.
 
-Hiperparâmetros: `max_iter=400`, `learning_rate=0.06`, `max_leaf_nodes=31`, `min_samples_leaf=30`,
-`l2_regularization=1.0`, early stopping com 10% de validação.
+Hyperparameters: `max_iter=400`, `learning_rate=0.06`, `max_leaf_nodes=31`, `min_samples_leaf=30`,
+`l2_regularization=1.0`, early stopping on a 10% validation split.
 
-## Resultado
+## Result
 
 ```
 folds: [0.8125  0.7953  0.8200  0.8199  0.8072]
@@ -45,29 +45,30 @@ CV:    0.8110 +/- 0.0092
 LB:    0.80266
 ```
 
-Distribuição das predições: 51,7% `True`, próximo do balanço real do treino (50,4%) — o modelo não está
-enviesado para uma classe.
+Prediction distribution: 51.7% `True`, close to the training balance (50.4%) — the model is not skewed
+towards one class.
 
-**CV 0,8110 vs. LB 0,80266** — lacuna de ~0,008. Está dentro do desvio-padrão entre folds (0,0092), e o
-leaderboard público cobre só parte do test set. Não há indício de overfitting relevante.
+**CV 0.8110 vs. LB 0.80266** — a gap of ~0.008. That sits within the standard deviation across folds
+(0.0092), and the public leaderboard covers only part of the test set. No sign of meaningful
+overfitting.
 
-## Conclusão
+## Conclusion
 
-Manter como baseline. O número já é competitivo: a maior parte do leaderboard fica em 0,80–0,81 e o topo
-perto de 0,82, então a margem restante é estreita e os ganhos daqui em diante serão pequenos.
+Keep as the baseline. The number is already competitive: most of the leaderboard sits at 0.80–0.81 with
+the top near 0.82, so the remaining margin is narrow and further gains will be small.
 
-Nada foi descartado ainda — não há experimento anterior para comparar.
+Nothing dropped yet — there is no previous experiment to compare against.
 
-## Próximo passo
+## Next step
 
-Em ordem de retorno esperado:
+In expected order of payoff:
 
-1. **Agregados de grupo mais ricos** — gasto total do grupo, se o grupo inteiro está em criosono,
-   planeta dominante do grupo. Precisam ser calculados dentro de cada split, já que nenhum `gggg` cruza
-   treino e teste; não há rótulo de companheiro para vazar.
-2. **Busca de hiperparâmetros** com `RandomizedSearchCV` sobre `learning_rate`, `max_leaf_nodes` e
+1. **Richer group aggregates** — total group spend, whether the whole group is in cryosleep, the
+   group's dominant home planet. These must be computed within each split, since no `gggg` crosses
+   train and test; there is no groupmate label to leak.
+2. **Hyperparameter search** with `RandomizedSearchCV` over `learning_rate`, `max_leaf_nodes` and
    `min_samples_leaf`.
-3. **Ensemble** com LightGBM ou CatBoost, por média de probabilidades.
+3. **Ensemble** with LightGBM or CatBoost, averaging probabilities.
 
-Antes de qualquer uma: confirmar a melhoria na CV. Com 10 submissões por dia, não vale gastar
-tentativa em diferença menor que o ruído.
+Before any of them: confirm the improvement in CV. With 10 submissions a day, it is not worth spending
+one on a difference smaller than the noise.
