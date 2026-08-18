@@ -127,7 +127,7 @@ código deste repositório:
 │   ├── TEMPLATE.md        modelo para uma nota nova
 │   └── 001-*.md           uma nota por experimento
 ├── notebooks/             EDA
-├── data/                  CSVs da Kaggle (não versionados)
+├── data/                  CSVs da Kaggle (não versionados, criados ao rodar)
 ├── models/                modelos treinados (não versionados)
 ├── submissions/           arquivos de submissão (não versionados)
 ├── CLAUDE.md              orientações para o Claude Code

@@ -1,16 +1,13 @@
 # Competition data — NOT redistributable.
 # Kaggle's rules forbid providing the Competition Data to anyone who has not
 # accepted them. Re-fetch instead: kagglehub.competition_download('spaceship-titanic')
-data/*
-!data/.gitkeep
+data/
 
 # Submissions are derived from the data; regenerate them from src/inference.py
-submissions/*
-!submissions/.gitkeep
+submissions/
 
 # Trained models
-models/*
-!models/.gitkeep
+models/
 *.pkl
 *.joblib
 *.h5

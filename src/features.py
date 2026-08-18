@@ -28,6 +28,7 @@ NUMERIC = [
 
 def load(split: str) -> pd.DataFrame:
     """Read one of the raw competition CSVs from data/."""
+    DATA.mkdir(exist_ok=True)
     path = DATA / f"{split}.csv"
     if not path.exists():
         msg = (
